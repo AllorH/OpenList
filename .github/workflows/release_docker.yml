@@ -162,9 +162,7 @@ jobs:
           images: |
             ${{ env.DOCKERHUB_ORG_NAME }}/${{ env.IMAGE_NAME_DOCKERHUB }}
           tags: >
-            ${{ github.event_name == 'workflow_dispatch'
-                && format('type=raw,value={0}', github.event.inputs.manual_tag)
-              || format('type=raw,value={0}', github.ref_name) }}
+            type=raw,value=${{ github.event.inputs.manual_tag || github.ref_name || 'main' }}
           flavor: |
             latest=${{ github.event_name == 'push' || github.event.inputs.as_latest == 'true' }}
             ${{ matrix.tag_favor }}
@@ -239,9 +237,7 @@ jobs:
           images: |
             ${{ env.DOCKERHUB_ORG_NAME }}/${{ env.IMAGE_NAME_DOCKERHUB }}
           tags: >
-            ${{ github.event_name == 'workflow_dispatch'
-                && format('type=raw,value={0}', github.event.inputs.manual_tag)
-              || format('type=raw,value={0}', github.ref_name) }}
+            type=raw,value=${{ github.event.inputs.manual_tag || github.ref_name || 'main' }}
           flavor: |
             latest=${{ github.event_name == 'push' || github.event.inputs.as_latest == 'true' }}
             ${{ matrix.tag_favor }}
