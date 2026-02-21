@@ -25,6 +25,7 @@ type DownloadTask struct {
 	TempDir           string       `json:"temp_dir"`
 	DeletePolicy      DeletePolicy `json:"delete_policy"`
 	Toolname          string       `json:"toolname"`
+	Filename          string       `json:"filename"`
 	Status            string       `json:"-"`
 	Signal            chan int     `json:"-"`
 	GID               string       `json:"-"`
