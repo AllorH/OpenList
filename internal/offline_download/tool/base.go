@@ -9,6 +9,7 @@ type AddUrlArgs struct {
 	UID     string
 	TempDir string
 	Signal  chan int
+	Options map[string]interface{}
 }
 
 type Status struct {

@@ -61,9 +61,13 @@ func (a *Aria2) IsReady() bool {
 }
 
 func (a *Aria2) AddURL(args *tool.AddUrlArgs) (string, error) {
-	options := map[string]interface{}{
-		"dir": args.TempDir,
+	options := make(map[string]interface{})
+	if args.Options != nil {
+		for k, v := range args.Options {
+			options[k] = v
+		}
 	}
+	options["dir"] = args.TempDir
 	gid, err := a.client.AddURI([]string{args.Url}, options)
 	if err != nil {
 		return "", err
