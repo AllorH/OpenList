@@ -66,9 +66,13 @@ func (a *Aria2) AddURL(args *tool.AddUrlArgs) (string, error) {
 	if strings.HasPrefix(strings.ToLower(args.Url), "ed2k://") {
 		return "", fmt.Errorf("aria2 does not support ed2k protocol. Please use Thunder/ThunderX/ThunderBrowser tool for ed2k links")
 	}
-	options := map[string]interface{}{
-		"dir": args.TempDir,
+	options := make(map[string]interface{})
+	if args.Options != nil {
+		for k, v := range args.Options {
+			options[k] = v
+		}
 	}
+	options["dir"] = args.TempDir
 	gid, err := a.client.AddURI([]string{args.Url}, options)
 	if err != nil {
 		return "", err

@@ -44,6 +44,7 @@ type AddURLArgs struct {
 	Tool         string
 	DeletePolicy DeletePolicy
 	Filename     string
+	Options      map[string]interface{}
 }
 
 func AddURL(ctx context.Context, args *AddURLArgs) (task.TaskExtensionInfo, error) {
@@ -177,6 +178,7 @@ func AddURL(ctx context.Context, args *AddURLArgs) (task.TaskExtensionInfo, erro
 		DeletePolicy: deletePolicy,
 		Toolname:     args.Tool,
 		Filename:     args.Filename,
+		Options:      args.Options,
 		tool:         tool,
 	}
 	DownloadTaskManager.Add(t)
