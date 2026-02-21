@@ -60,12 +60,12 @@ jobs:
         if: steps.cache-musl.outputs.cache-hit != 'true'
         run: bash build.sh prepare docker-multiplatform
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Build go binary (release)
         run: bash build.sh release docker-multiplatform
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           FRONTEND_REPO: ${{ vars.FRONTEND_REPO }}
 
       - name: Upload artifacts
@@ -100,12 +100,12 @@ jobs:
         if: steps.cache-musl.outputs.cache-hit != 'true'
         run: bash build.sh prepare lite docker-multiplatform
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Build go binary (release)
         run: bash build.sh release lite docker-multiplatform
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           FRONTEND_REPO: ${{ vars.FRONTEND_REPO }}
 
       - name: Upload artifacts
@@ -164,7 +164,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GH_TOKEN }}
 
       - name: Login to DockerHub Container Registry
         if: env.IMAGE_PUSH == 'true'
@@ -248,7 +248,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GH_TOKEN }}
 
       - name: Login to DockerHub Container Registry
         if: env.IMAGE_PUSH == 'true'
