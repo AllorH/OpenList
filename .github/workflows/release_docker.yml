@@ -67,10 +67,9 @@ jobs:
           FRONTEND_REPO: ${{ vars.FRONTEND_REPO }}
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ env.ARTIFACT_NAME }}
-          overwrite: true
           path: |
             build/
             !build/*.tgz
@@ -86,6 +85,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.25.0'
+          cache: false
 
       - name: Build go binary (release)
         run: |
@@ -101,7 +101,6 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.ARTIFACT_NAME_LITE }}
-          overwrite: true
           path: |
             build/
             !build/*.tgz
@@ -136,7 +135,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v3
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: 'build/'
@@ -220,7 +219,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v3
         with:
           name: ${{ env.ARTIFACT_NAME_LITE }}
           path: 'build/'
