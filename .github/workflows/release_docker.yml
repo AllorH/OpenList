@@ -56,21 +56,12 @@ jobs:
           apt-get install -y jq sudo
 
 
-      - name: Cache Musl
-        id: cache-musl
-        uses: actions/cache@v4
-        with:
-          path: build/musl-libs
-          key: docker-musl-libs-v2
-
-      - name: Download Musl Library
-        if: steps.cache-musl.outputs.cache-hit != 'true'
-        run: bash build.sh prepare docker-multiplatform
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-
       - name: Build go binary (release)
-        run: bash build.sh release docker-multiplatform
+        run: |
+          sudo apt-get update && sudo apt-get install -y musl-tools
+          mkdir -p build/linux/amd64
+          export CGO_ENABLED=1
+          go build -o build/linux/amd64/openlist -ldflags="-w -s -linkmode external -extldflags '-static -fpic'" -tags=jsoniter .
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           FRONTEND_REPO: ${{ vars.FRONTEND_REPO }}
@@ -96,21 +87,12 @@ jobs:
         with:
           go-version: '1.25.0'
 
-      - name: Cache Musl
-        id: cache-musl
-        uses: actions/cache@v4
-        with:
-          path: build/musl-libs
-          key: docker-musl-libs-v2
-
-      - name: Download Musl Library
-        if: steps.cache-musl.outputs.cache-hit != 'true'
-        run: bash build.sh prepare lite docker-multiplatform
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-
       - name: Build go binary (release)
-        run: bash build.sh release lite docker-multiplatform
+        run: |
+          sudo apt-get update && sudo apt-get install -y musl-tools
+          mkdir -p build/linux/amd64
+          export CGO_ENABLED=1
+          go build -o build/linux/amd64/openlist -ldflags="-w -s -linkmode external -extldflags '-static -fpic'" -tags=jsoniter .
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           FRONTEND_REPO: ${{ vars.FRONTEND_REPO }}
