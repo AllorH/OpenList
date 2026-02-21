@@ -41,6 +41,7 @@ type AddURLArgs struct {
 	DstDirPath   string
 	Tool         string
 	DeletePolicy DeletePolicy
+	Filename     string
 }
 
 func AddURL(ctx context.Context, args *AddURLArgs) (task.TaskExtensionInfo, error) {
@@ -67,7 +68,7 @@ func AddURL(ctx context.Context, args *AddURLArgs) (task.TaskExtensionInfo, erro
 	}
 	// try putting url
 	if args.Tool == "SimpleHttp" {
-		err = tryPutUrl(ctx, args.DstDirPath, args.URL)
+		err = tryPutUrl(ctx, args.DstDirPath, args.URL, args.Filename)
 		if err == nil || !errors.Is(err, errs.NotImplement) {
 			return nil, err
 		}
@@ -155,19 +156,24 @@ func AddURL(ctx context.Context, args *AddURLArgs) (task.TaskExtensionInfo, erro
 		TempDir:      tempDir,
 		DeletePolicy: deletePolicy,
 		Toolname:     args.Tool,
+		Filename:     args.Filename,
 		tool:         tool,
 	}
 	DownloadTaskManager.Add(t)
 	return t, nil
 }
 
-func tryPutUrl(ctx context.Context, path, urlStr string) error {
+func tryPutUrl(ctx context.Context, path, urlStr string, filename string) error {
 	var dstName string
-	u, err := url.Parse(urlStr)
-	if err == nil {
-		dstName = stdpath.Base(u.Path)
+	if filename != "" {
+		dstName = filename
 	} else {
-		dstName = "UnnamedURL"
+		u, err := url.Parse(urlStr)
+		if err == nil {
+			dstName = stdpath.Base(u.Path)
+		} else {
+			dstName = "UnnamedURL"
+		}
 	}
 	return fs.PutURL(ctx, path, dstName, urlStr)
 }
