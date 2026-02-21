@@ -56,11 +56,18 @@ jobs:
           apt-get install -y jq sudo
 
 
+      - name: Download Frontend
+        run: bash build.sh release web
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          FRONTEND_REPO: ${{ vars.FRONTEND_REPO }}
+
       - name: Build go binary (release)
         run: |
           sudo apt-get update && sudo apt-get install -y musl-tools
           mkdir -p build/linux/amd64
           export CGO_ENABLED=1
+          export CC=musl-gcc
           go build -o build/linux/amd64/openlist -ldflags="-w -s -linkmode external -extldflags '-static -fpic'" -tags=jsoniter .
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -72,6 +79,7 @@ jobs:
           name: ${{ env.ARTIFACT_NAME }}
           path: |
             build/
+            public/
             !build/*.tgz
             !build/musl-libs/**
 
@@ -108,7 +116,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: ${{ env.ARTIFACT_NAME }}
-          path: 'build/'
+          path: .
 
       - name: Install Docker
         run: curl -fsSL https://get.docker.com | sh
