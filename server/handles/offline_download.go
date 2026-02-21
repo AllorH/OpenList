@@ -475,11 +475,12 @@ func OfflineDownloadTools(c *gin.Context) {
 }
 
 type AddOfflineDownloadReq struct {
-	Urls         []string `json:"urls"`
-	Path         string   `json:"path"`
-	Tool         string   `json:"tool"`
-	DeletePolicy string   `json:"delete_policy"`
-	Filenames    []string `json:"filenames"`
+	Urls         []string               `json:"urls"`
+	Path         string                 `json:"path"`
+	Tool         string                 `json:"tool"`
+	DeletePolicy string                 `json:"delete_policy"`
+	Filenames    []string               `json:"filenames"`
+	Options      map[string]interface{} `json:"options"`
 }
 
 func AddOfflineDownload(c *gin.Context) {
@@ -519,6 +520,7 @@ func AddOfflineDownload(c *gin.Context) {
 			Tool:         req.Tool,
 			DeletePolicy: tool.DeletePolicy(req.DeletePolicy),
 			Filename:     filename,
+			Options:      req.Options,
 		})
 		if err != nil {
 			common.ErrorResp(c, err, 500)
