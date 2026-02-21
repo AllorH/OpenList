@@ -33,7 +33,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y jq
+          apt-get install -y jq sudo
 
       - name: Setup web
         run: bash build.sh dev web
