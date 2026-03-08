@@ -21,6 +21,32 @@
 - [LICENSE](./LICENSE)
 
 ## Disclaimer
+加强离线下载api的逻辑 使用api调用离线下载的功能的时候，支持重命名文件名。
+后面会基于离线下载开发更多的api.
+小萌新，不太会用git，也不知道这个需求是不是所有人的需求。
+仅此。
+thanks gemini,
+
+# api调用simplehttp 时支持传入文件名
+type AddOfflineDownloadReq struct {
+	Urls         []string               `json:"urls"`
+	Path         string                 `json:"path"`
+	Tool         string                 `json:"tool"`
+	DeletePolicy string                 `json:"delete_policy"`
+	Filenames    []string               `json:"filenames"`
+	Options      map[string]interface{} `json:"options"`
+}
+
+# api调用的aria2下载的时候 也支持传入文件名参数
+type AddOfflineDownloadReq struct {
+	Urls         []string               `json:"urls"`
+	Path         string                 `json:"path"`
+	Tool         string                 `json:"tool"`
+	DeletePolicy string                 `json:"delete_policy"`
+	Filenames    []string               `json:"filenames"`
+	Options      map[string]interface{} `json:"options"`
+}
+后面还会修改，就先这样吧~~~~~~~
 
 OpenList is an open-source project independently maintained by the OpenList Team, following the AGPL-3.0 license and committed to maintaining complete code openness and modification transparency.
 
