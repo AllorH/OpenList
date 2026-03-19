@@ -27,6 +27,7 @@ type DownloadTask struct {
 	Toolname          string                 `json:"toolname"`
 	Filename          string                 `json:"filename"`
 	Options           map[string]interface{} `json:"options"`
+	TransferTaskIDs   []string               `json:"transfer_task_ids"`
 	Status            string                 `json:"-"`
 	Signal            chan int               `json:"-"`
 	GID               string                 `json:"-"`
@@ -181,7 +182,9 @@ func (t *DownloadTask) Transfer() error {
 	if toolName == "115 Cloud" || toolName == "115 Open" || toolName == "123 Open" || toolName == "123Pan" || toolName == "PikPak" || toolName == "Thunder" || toolName == "ThunderX" || toolName == "ThunderBrowser" {
 		// 如果不是直接下载到目标路径，则进行转存
 		if t.TempDir != t.DstDirPath {
-			return transferObj(t.Ctx(), t.TempDir, t.DstDirPath, t.DeletePolicy)
+			transferTaskIDs, err := transferObj(t.Ctx(), t.TempDir, t.DstDirPath, t.DeletePolicy)
+			t.TransferTaskIDs = transferTaskIDs
+			return err
 		}
 		return nil
 	}
@@ -209,9 +212,12 @@ func (t *DownloadTask) Transfer() error {
 		tsk.groupID = path.Join(tsk.DstStorageMp, tsk.DstActualPath)
 		task_group.TransferCoordinator.AddTask(tsk.groupID, nil)
 		TransferTaskManager.Add(tsk)
+		t.TransferTaskIDs = []string{tsk.GetID()}
 		return nil
 	}
-	return transferStd(t.Ctx(), t.TempDir, t.DstDirPath, t.DeletePolicy)
+	transferTaskIDs, err := transferStd(t.Ctx(), t.TempDir, t.DstDirPath, t.DeletePolicy)
+	t.TransferTaskIDs = transferTaskIDs
+	return err
 }
 
 func (t *DownloadTask) GetName() string {

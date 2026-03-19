@@ -27,6 +27,7 @@ type TaskInfo struct {
 	StartTime   *time.Time  `json:"start_time"`
 	EndTime     *time.Time  `json:"end_time"`
 	TotalBytes  int64       `json:"total_bytes"`
+	TransferTaskIDs []string `json:"transfer_task_ids,omitempty"`
 	Error       string      `json:"error"`
 }
 
@@ -46,6 +47,10 @@ func getTaskInfo[T task.TaskExtensionInfo](task T) TaskInfo {
 		creatorName = task.GetCreator().Username
 		creatorRole = task.GetCreator().Role
 	}
+	var transferTaskIDs []string
+	if offlineTask, ok := any(task).(*tool.DownloadTask); ok {
+		transferTaskIDs = offlineTask.TransferTaskIDs
+	}
 	return TaskInfo{
 		ID:          task.GetID(),
 		Name:        task.GetName(),
@@ -57,6 +62,7 @@ func getTaskInfo[T task.TaskExtensionInfo](task T) TaskInfo {
 		StartTime:   task.GetStartTime(),
 		EndTime:     task.GetEndTime(),
 		TotalBytes:  task.GetTotalBytes(),
+		TransferTaskIDs: transferTaskIDs,
 		Error:       errMsg,
 	}
 }

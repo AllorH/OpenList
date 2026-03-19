@@ -123,16 +123,17 @@ var (
 	TransferTaskManager *tache.Manager[*TransferTask]
 )
 
-func transferStd(ctx context.Context, tempDir, dstDirPath string, deletePolicy DeletePolicy) error {
+func transferStd(ctx context.Context, tempDir, dstDirPath string, deletePolicy DeletePolicy) ([]string, error) {
 	dstStorage, dstDirActualPath, err := op.GetStorageAndActualPath(dstDirPath)
 	if err != nil {
-		return errors.WithMessage(err, "failed get dst storage")
+		return nil, errors.WithMessage(err, "failed get dst storage")
 	}
 	entries, err := os.ReadDir(tempDir)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	taskCreator, _ := ctx.Value(conf.UserKey).(*model.User)
+	transferTaskIDs := make([]string, 0, len(entries))
 	for _, entry := range entries {
 		t := &TransferTask{
 			TaskData: fs.TaskData{
@@ -150,8 +151,9 @@ func transferStd(ctx context.Context, tempDir, dstDirPath string, deletePolicy D
 		t.groupID = path.Join(t.DstStorageMp, t.DstActualPath)
 		task_group.TransferCoordinator.AddTask(t.groupID, nil)
 		TransferTaskManager.Add(t)
+		transferTaskIDs = append(transferTaskIDs, t.GetID())
 	}
-	return nil
+	return transferTaskIDs, nil
 }
 
 func transferStdPath(t *TransferTask) error {
@@ -230,20 +232,21 @@ func removeStdTemp(t *TransferTask) {
 	}
 }
 
-func transferObj(ctx context.Context, tempDir, dstDirPath string, deletePolicy DeletePolicy) error {
+func transferObj(ctx context.Context, tempDir, dstDirPath string, deletePolicy DeletePolicy) ([]string, error) {
 	srcStorage, srcObjActualPath, err := op.GetStorageAndActualPath(tempDir)
 	if err != nil {
-		return errors.WithMessage(err, "failed get src storage")
+		return nil, errors.WithMessage(err, "failed get src storage")
 	}
 	dstStorage, dstDirActualPath, err := op.GetStorageAndActualPath(dstDirPath)
 	if err != nil {
-		return errors.WithMessage(err, "failed get dst storage")
+		return nil, errors.WithMessage(err, "failed get dst storage")
 	}
 	objs, err := op.List(ctx, srcStorage, srcObjActualPath, model.ListArgs{})
 	if err != nil {
-		return errors.WithMessagef(err, "failed list src [%s] objs", tempDir)
+		return nil, errors.WithMessagef(err, "failed list src [%s] objs", tempDir)
 	}
 	taskCreator, _ := ctx.Value(conf.UserKey).(*model.User) // taskCreator is nil when convert failed
+	transferTaskIDs := make([]string, 0, len(objs))
 	for _, obj := range objs {
 		t := &TransferTask{
 			TaskData: fs.TaskData{
@@ -263,8 +266,9 @@ func transferObj(ctx context.Context, tempDir, dstDirPath string, deletePolicy D
 		t.groupID = path.Join(t.DstStorageMp, t.DstActualPath)
 		task_group.TransferCoordinator.AddTask(t.groupID, nil)
 		TransferTaskManager.Add(t)
+		transferTaskIDs = append(transferTaskIDs, t.GetID())
 	}
-	return nil
+	return transferTaskIDs, nil
 }
 
 func transferObjPath(t *TransferTask) error {
