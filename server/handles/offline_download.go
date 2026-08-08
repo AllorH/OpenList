@@ -7,7 +7,6 @@ import (
 	_115_open "github.com/OpenListTeam/OpenList/v4/drivers/115_open"
 	_123 "github.com/OpenListTeam/OpenList/v4/drivers/123"
 	_123_open "github.com/OpenListTeam/OpenList/v4/drivers/123_open"
-	"github.com/OpenListTeam/OpenList/v4/drivers/guangyapan"
 	"github.com/OpenListTeam/OpenList/v4/drivers/pikpak"
 	"github.com/OpenListTeam/OpenList/v4/drivers/thunder"
 	"github.com/OpenListTeam/OpenList/v4/drivers/thunder_browser"
@@ -473,60 +472,18 @@ func SetThunderBrowser(c *gin.Context) {
 	common.SuccessResp(c, "ok")
 }
 
-type SetGuangYaPanReq struct {
-	TempDir string `json:"temp_dir" form:"temp_dir"`
-}
-
-func SetGuangYaPan(c *gin.Context) {
-	var req SetGuangYaPanReq
-	if err := c.ShouldBind(&req); err != nil {
-		common.ErrorResp(c, err, 400)
-		return
-	}
-	if req.TempDir != "" {
-		storage, _, err := op.GetStorageAndActualPath(req.TempDir)
-		if err != nil {
-			common.ErrorStrResp(c, "storage does not exists", 400)
-			return
-		}
-		if storage.Config().CheckStatus && storage.GetStorage().Status != op.WORK {
-			common.ErrorStrResp(c, "storage not init: "+storage.GetStorage().Status, 400)
-			return
-		}
-		if _, ok := storage.(*guangyapan.GuangYaPan); !ok {
-			common.ErrorStrResp(c, "unsupported storage driver for offline download, only GuangYaPan is supported", 400)
-			return
-		}
-	}
-	items := []model.SettingItem{
-		{Key: conf.GuangYaPanTempDir, Value: req.TempDir, Type: conf.TypeString, Group: model.OFFLINE_DOWNLOAD, Flag: model.PRIVATE},
-	}
-	if err := op.SaveSettingItems(items); err != nil {
-		common.ErrorResp(c, err, 500)
-		return
-	}
-	_tool, err := tool.Tools.Get("GuangYaPan")
-	if err != nil {
-		common.ErrorResp(c, err, 500)
-		return
-	}
-	if _, err := _tool.Init(); err != nil {
-		common.ErrorResp(c, err, 500)
-		return
-	}
-	common.SuccessResp(c, "ok")
-}
-
 func OfflineDownloadTools(c *gin.Context) {
 	tools := tool.Tools.Names()
 	common.SuccessResp(c, tools)
 }
 
 type AddOfflineDownloadReq struct {
-	Urls         []string `json:"urls"`
-	Path         string   `json:"path"`
-	Tool         string   `json:"tool"`
-	DeletePolicy string   `json:"delete_policy"`
+	Urls         []string               `json:"urls"`
+	Path         string                 `json:"path"`
+	Tool         string                 `json:"tool"`
+	DeletePolicy string                 `json:"delete_policy"`
+	Filenames    []string               `json:"filenames"`
+	Options      map[string]interface{} `json:"options"`
 }
 
 func AddOfflineDownload(c *gin.Context) {
@@ -556,11 +513,17 @@ func AddOfflineDownload(c *gin.Context) {
 		return
 	}
 	var tasks []task.TaskExtensionInfo
-	for _, url := range req.Urls {
+	for i, url := range req.Urls {
 		// Filter out empty lines and whitespace-only strings
 		trimmedUrl := strings.TrimSpace(url)
 		if trimmedUrl == "" {
 			continue
+		}
+
+		// Get corresponding filename if provided
+		var filename string
+		if i < len(req.Filenames) {
+			filename = strings.TrimSpace(req.Filenames[i])
 		}
 
 		t, err := tool.AddURL(c, &tool.AddURLArgs{
@@ -568,6 +531,8 @@ func AddOfflineDownload(c *gin.Context) {
 			DstDirPath:   reqPath,
 			Tool:         req.Tool,
 			DeletePolicy: tool.DeletePolicy(req.DeletePolicy),
+			Filename:     filename,
+			Options:      req.Options,
 		})
 		if err != nil {
 			common.ErrorResp(c, err, 500)

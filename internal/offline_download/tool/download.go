@@ -20,14 +20,16 @@ import (
 
 type DownloadTask struct {
 	task.TaskExtension
-	Url               string       `json:"url"`
-	DstDirPath        string       `json:"dst_dir_path"`
-	TempDir           string       `json:"temp_dir"`
-	DeletePolicy      DeletePolicy `json:"delete_policy"`
-	Toolname          string       `json:"toolname"`
-	Status            string       `json:"-"`
-	Signal            chan int     `json:"-"`
-	GID               string       `json:"-"`
+	Url               string                 `json:"url"`
+	DstDirPath        string                 `json:"dst_dir_path"`
+	TempDir           string                 `json:"temp_dir"`
+	DeletePolicy      DeletePolicy           `json:"delete_policy"`
+	Toolname          string                 `json:"toolname"`
+	Filename          string                 `json:"filename"`
+	Options           map[string]interface{} `json:"options"`
+	Status            string                 `json:"-"`
+	Signal            chan int               `json:"-"`
+	GID               string                 `json:"-"`
 	tool              Tool
 	callStatusRetried int
 }
@@ -59,6 +61,7 @@ func (t *DownloadTask) Run() error {
 		UID:     t.ID,
 		TempDir: t.TempDir,
 		Signal:  t.Signal,
+		Options: t.Options,
 	})
 	if err != nil {
 		return err
@@ -96,9 +99,6 @@ outer:
 		return nil
 	}
 	if t.tool.Name() == "ThunderX" {
-		return nil
-	}
-	if t.tool.Name() == "GuangYaPan" {
 		return nil
 	}
 	if t.tool.Name() == "115 Cloud" {
@@ -179,7 +179,7 @@ func (t *DownloadTask) Update() (bool, error) {
 
 func (t *DownloadTask) Transfer() error {
 	toolName := t.tool.Name()
-	if toolName == "115 Cloud" || toolName == "115 Open" || toolName == "123 Open" || toolName == "123Pan" || toolName == "PikPak" || toolName == "Thunder" || toolName == "ThunderX" || toolName == "ThunderBrowser" || toolName == "GuangYaPan" {
+	if toolName == "115 Cloud" || toolName == "115 Open" || toolName == "123 Open" || toolName == "123Pan" || toolName == "PikPak" || toolName == "Thunder" || toolName == "ThunderX" || toolName == "ThunderBrowser" {
 		// 如果不是直接下载到目标路径，则进行转存
 		if t.TempDir != t.DstDirPath {
 			return transferObj(t.Ctx(), t.TempDir, t.DstDirPath, t.DeletePolicy)

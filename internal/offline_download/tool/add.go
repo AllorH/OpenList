@@ -12,7 +12,6 @@ import (
 	_115_open "github.com/OpenListTeam/OpenList/v4/drivers/115_open"
 	_123 "github.com/OpenListTeam/OpenList/v4/drivers/123"
 	_123_open "github.com/OpenListTeam/OpenList/v4/drivers/123_open"
-	"github.com/OpenListTeam/OpenList/v4/drivers/guangyapan"
 	"github.com/OpenListTeam/OpenList/v4/drivers/pikpak"
 	"github.com/OpenListTeam/OpenList/v4/drivers/thunder"
 	"github.com/OpenListTeam/OpenList/v4/drivers/thunder_browser"
@@ -44,6 +43,8 @@ type AddURLArgs struct {
 	DstDirPath   string
 	Tool         string
 	DeletePolicy DeletePolicy
+	Filename     string
+	Options      map[string]interface{}
 }
 
 func AddURL(ctx context.Context, args *AddURLArgs) (task.TaskExtensionInfo, error) {
@@ -73,7 +74,7 @@ func AddURL(ctx context.Context, args *AddURLArgs) (task.TaskExtensionInfo, erro
 		if isSimpleHttpSchemeUnsupported(args.URL) {
 			return nil, fmt.Errorf("SimpleHttp tool does not support this URL scheme, please use aria2 or other tools for magnet/ed2k links")
 		}
-		err = tryPutUrl(ctx, args.DstDirPath, args.URL)
+		err = tryPutUrl(ctx, args.DstDirPath, args.URL, args.Filename)
 		if err == nil || !errors.Is(err, errs.NotImplement) {
 			return nil, err
 		}
@@ -163,16 +164,6 @@ func AddURL(ctx context.Context, args *AddURLArgs) (task.TaskExtensionInfo, erro
 		} else {
 			tempDir = filepath.Join(setting.GetStr(conf.ThunderXTempDir), uid)
 		}
-	case "GuangYaPan":
-		if _, ok := storage.(*guangyapan.GuangYaPan); ok {
-			tempDir = args.DstDirPath
-		} else {
-			tempBase := setting.GetStr(conf.GuangYaPanTempDir)
-			if tempBase == "" {
-				return nil, errors.New("GuangYaPan temp dir is not set")
-			}
-			tempDir = filepath.Join(tempBase, uid)
-		}
 	}
 
 	taskCreator, _ := ctx.Value(conf.UserKey).(*model.User) // taskCreator is nil when convert failed
@@ -186,19 +177,25 @@ func AddURL(ctx context.Context, args *AddURLArgs) (task.TaskExtensionInfo, erro
 		TempDir:      tempDir,
 		DeletePolicy: deletePolicy,
 		Toolname:     args.Tool,
+		Filename:     args.Filename,
+		Options:      args.Options,
 		tool:         tool,
 	}
 	DownloadTaskManager.Add(t)
 	return t, nil
 }
 
-func tryPutUrl(ctx context.Context, path, urlStr string) error {
+func tryPutUrl(ctx context.Context, path, urlStr string, filename string) error {
 	var dstName string
-	u, err := url.Parse(urlStr)
-	if err == nil {
-		dstName = stdpath.Base(u.Path)
+	if filename != "" {
+		dstName = filename
 	} else {
-		dstName = "UnnamedURL"
+		u, err := url.Parse(urlStr)
+		if err == nil {
+			dstName = stdpath.Base(u.Path)
+		} else {
+			dstName = "UnnamedURL"
+		}
 	}
 	return fs.PutURL(ctx, path, dstName, urlStr)
 }

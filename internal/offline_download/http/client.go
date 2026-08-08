@@ -70,9 +70,14 @@ func (s SimpleHttp) Run(task *tool.DownloadTask) error {
 	if resp.StatusCode >= 400 {
 		return fmt.Errorf("http status code %d", resp.StatusCode)
 	}
-	filename, err := parseFilenameFromContentDisposition(resp.Header.Get("Content-Disposition"))
-	if err != nil {
-		filename, err = sanitizeFilename(resp.Request.URL.Path)
+	var filename string
+	if task.Filename != "" {
+		filename = task.Filename
+	} else {
+		filename, err = parseFilenameFromContentDisposition(resp.Header.Get("Content-Disposition"))
+		if err != nil {
+			filename, err = sanitizeFilename(resp.Request.URL.Path)
+		}
 	}
 	if err != nil {
 		filename = strings.ReplaceAll(req.URL.Host, ":", "_")
