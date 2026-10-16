@@ -110,7 +110,7 @@ jobs:
           else
             UPSTREAM=$(git describe --tags --abbrev=0 --match 'v[0-9]*')
           fi
-          echo "hjh_tag=${UPSTREAM}-hjh" >> $GITHUB_OUTPUT
+          echo "version_tag=${UPSTREAM}" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ github.token }}
 
@@ -129,7 +129,7 @@ jobs:
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
         with:
           images: ${{ env.DOCKERHUB_ORG_NAME }}/${{ env.IMAGE_NAME_DOCKERHUB }}
-          tags: ${{ format('type=raw,value={0}', steps.tag.outputs.hjh_tag) }}
+          tags: ${{ format('type=raw,value={0}', steps.tag.outputs.version_tag) }}
           flavor: |
             latest=false
             ${{ matrix.tag_favor }}
