@@ -224,7 +224,7 @@ func _fs(g *gin.RouterGroup) {
 	multipart.GET("/status", handles.MultipartStatus)
 	multipart.POST("/abort", handles.MultipartAbort)
 	g.POST("/link", middlewares.AuthAdmin, handles.Link)
-	// g.POST("/add_aria2", handles.AddOfflineDownload)
+	g.POST("/add_aria2", handles.AddOfflineDownload)
 	// g.POST("/add_qbit", handles.AddQbittorrent)
 	// g.POST("/add_transmission", handles.SetTransmission)
 	g.POST("/add_offline_download", handles.AddOfflineDownload)

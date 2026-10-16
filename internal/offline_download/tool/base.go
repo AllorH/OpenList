@@ -12,6 +12,7 @@ type AddUrlArgs struct {
 	TempDir string
 	Signal  chan int
 	Ctx     context.Context
+	Options map[string]interface{}
 }
 
 type Status struct {

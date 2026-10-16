@@ -44,6 +44,8 @@ type AddURLArgs struct {
 	DstDirPath   string
 	Tool         string
 	DeletePolicy DeletePolicy
+	Filename     string
+	Options      map[string]interface{}
 }
 
 func AddURL(ctx context.Context, args *AddURLArgs) (task.TaskExtensionInfo, error) {
@@ -73,7 +75,7 @@ func AddURL(ctx context.Context, args *AddURLArgs) (task.TaskExtensionInfo, erro
 		if isSimpleHttpSchemeUnsupported(args.URL) {
 			return nil, fmt.Errorf("SimpleHttp tool does not support this URL scheme, please use aria2 or other tools for magnet/ed2k links")
 		}
-		err = tryPutUrl(ctx, args.DstDirPath, args.URL)
+		err = tryPutUrl(ctx, args.DstDirPath, args.URL, args.Filename)
 		if err == nil || !errors.Is(err, errs.NotImplement) {
 			return nil, err
 		}
@@ -190,13 +192,18 @@ func AddURL(ctx context.Context, args *AddURLArgs) (task.TaskExtensionInfo, erro
 		TempDir:      tempDir,
 		DeletePolicy: deletePolicy,
 		Toolname:     args.Tool,
+		Filename:     args.Filename,
+		Options:      args.Options,
 		tool:         tool,
 	}
 	DownloadTaskManager.Add(t)
 	return t, nil
 }
 
-func tryPutUrl(ctx context.Context, path, urlStr string) error {
+func tryPutUrl(ctx context.Context, path, urlStr, filename string) error {
+	if filename != "" {
+		return fs.PutURL(ctx, path, filename, urlStr)
+	}
 	var dstName string
 	u, err := url.Parse(urlStr)
 	if err == nil {

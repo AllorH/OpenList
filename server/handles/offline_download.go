@@ -322,10 +322,12 @@ func OfflineDownloadTools(c *gin.Context) {
 }
 
 type AddOfflineDownloadReq struct {
-	Urls         []string `json:"urls"`
-	Path         string   `json:"path"`
-	Tool         string   `json:"tool"`
-	DeletePolicy string   `json:"delete_policy"`
+	Filenames    []string               `json:"filenames"`
+	Options      map[string]interface{} `json:"options"`
+	Urls         []string               `json:"urls"`
+	Path         string                 `json:"path"`
+	Tool         string                 `json:"tool"`
+	DeletePolicy string                 `json:"delete_policy"`
 }
 
 func AddOfflineDownload(c *gin.Context) {
@@ -355,15 +357,22 @@ func AddOfflineDownload(c *gin.Context) {
 		return
 	}
 	var tasks []task.TaskExtensionInfo
-	for _, url := range req.Urls {
+	for i, url := range req.Urls {
 		// Filter out empty lines and whitespace-only strings
 		trimmedUrl := strings.TrimSpace(url)
 		if trimmedUrl == "" {
 			continue
 		}
 
+		var filename string
+		if i < len(req.Filenames) {
+			filename = strings.TrimSpace(req.Filenames[i])
+		}
+
 		t, err := tool.AddURL(c, &tool.AddURLArgs{
 			URL:          trimmedUrl,
+			Filename:     filename,
+			Options:      req.Options,
 			DstDirPath:   reqPath,
 			Tool:         req.Tool,
 			DeletePolicy: tool.DeletePolicy(req.DeletePolicy),

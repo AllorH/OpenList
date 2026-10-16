@@ -20,14 +20,16 @@ import (
 
 type DownloadTask struct {
 	task.TaskExtension
-	Url               string       `json:"url"`
-	DstDirPath        string       `json:"dst_dir_path"`
-	TempDir           string       `json:"temp_dir"`
-	DeletePolicy      DeletePolicy `json:"delete_policy"`
-	Toolname          string       `json:"toolname"`
-	Status            string       `json:"-"`
-	Signal            chan int     `json:"-"`
-	GID               string       `json:"-"`
+	Filename          string                 `json:"filename"`
+	Options           map[string]interface{} `json:"options"`
+	Url               string                 `json:"url"`
+	DstDirPath        string                 `json:"dst_dir_path"`
+	TempDir           string                 `json:"temp_dir"`
+	DeletePolicy      DeletePolicy           `json:"delete_policy"`
+	Toolname          string                 `json:"toolname"`
+	Status            string                 `json:"-"`
+	Signal            chan int               `json:"-"`
+	GID               string                 `json:"-"`
 	tool              Tool
 	callStatusRetried int
 }
@@ -59,6 +61,7 @@ func (t *DownloadTask) Run() error {
 		UID:     t.ID,
 		TempDir: t.TempDir,
 		Signal:  t.Signal,
+		Options: t.Options,
 	})
 	if err != nil {
 		return err
