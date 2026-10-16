@@ -30,10 +30,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
         with:
-          go-version: '1.26'
+          go-version-file: go.mod
 
       - name: Cache Musl
         id: cache-musl
@@ -93,6 +95,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/download-artifact@v8
         with:
           name: ${{ env.ARTIFACT_NAME }}
@@ -104,7 +108,7 @@ jobs:
           if [ -n "${{ github.event.inputs.upstream_tag }}" ]; then
             UPSTREAM="${{ github.event.inputs.upstream_tag }}"
           else
-            UPSTREAM=$(gh release list -R OpenListTeam/OpenList -L 1 --exclude-drafts --exclude-pre-releases --json tagName -q '.[0].tagName')
+            UPSTREAM=$(git describe --tags --abbrev=0 --match 'v[0-9]*')
           fi
           echo "hjh_tag=${UPSTREAM}-hjh" >> $GITHUB_OUTPUT
         env:
@@ -143,4 +147,3 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: ${{ env.RELEASE_PLATFORMS }}
-
