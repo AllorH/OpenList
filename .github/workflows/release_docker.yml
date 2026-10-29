@@ -1,10 +1,12 @@
 name: Release builds (Docker)
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       upstream_tag:
-        description: '上游版本号（如 v4.2.5），留空则自动取最新 Release'
+        description: '上游版本号（如 v4.2.9），留空则使用当前代码最近的版本标签'
         required: false
         type: string
         default: ''
@@ -18,10 +20,10 @@ env:
   IMAGE_NAME_DOCKERHUB: openlist
   ARTIFACT_NAME: 'binaries_docker_release'
   RELEASE_PLATFORMS: 'linux/amd64'
-  IMAGE_PUSH: ${{ github.event_name == 'workflow_dispatch' }}
+  IMAGE_PUSH: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
 
 permissions:
-  packages: write
+  contents: read
 
 jobs:
   build_binary:
@@ -29,17 +31,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
         with:
-          go-version-file: go.mod
+          go-version: '1.27.3'
 
       - name: Cache Musl
         id: cache-musl
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: build/musl-libs
           key: docker-musl-libs-v2
@@ -57,7 +59,7 @@ jobs:
           FRONTEND_REPO: ${{ vars.FRONTEND_REPO }}
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ${{ env.ARTIFACT_NAME }}
           overwrite: true
@@ -94,10 +96,10 @@ jobs:
             tag_favor: "suffix=-aio,onlatest=true"
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: 'build/'
@@ -105,21 +107,25 @@ jobs:
       - name: Generate tag
         id: tag
         run: |
-          if [ -n "${{ github.event.inputs.upstream_tag }}" ]; then
-            UPSTREAM="${{ github.event.inputs.upstream_tag }}"
+          if [ -n "$UPSTREAM_TAG" ]; then
+            UPSTREAM="$UPSTREAM_TAG"
           else
             UPSTREAM=$(git describe --tags --abbrev=0 --match 'v[0-9]*')
           fi
-          echo "version_tag=${UPSTREAM}" >> $GITHUB_OUTPUT
+          if [[ ! "$UPSTREAM" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9_.-]+)?$ ]]; then
+            echo "Invalid upstream version tag: $UPSTREAM" >&2
+            exit 1
+          fi
+          echo "version_tag=${UPSTREAM}" >> "$GITHUB_OUTPUT"
         env:
-          GH_TOKEN: ${{ github.token }}
+          UPSTREAM_TAG: ${{ inputs.upstream_tag }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
 
       - name: Login to DockerHub Container Registry
         if: env.IMAGE_PUSH == 'true'
-        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4
         with:
           username: ${{ vars.DOCKERHUB_ORG_NAME_BACKUP || env.DOCKERHUB_ORG_NAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -136,7 +142,7 @@ jobs:
 
       - name: Build and push
         id: docker_build
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
           context: .
           file: Dockerfile.ci
